@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import './App.css';
-import { Papa } from 'papaparse';
+import React, { useEffect, useState } from 'react'
+import './App.css'
+import { Papa } from 'papaparse'
+import logo from "./aaailogo.png"
+import { ToastContainer, toast, Zoom, Flip } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
-function App() {
+export default function App() {
   const [loopStart, setLoopStart] = useState([]);
   const [file, setFile] = useState([]);
   const [fileData, setFileData] = useState([]);
@@ -17,7 +20,7 @@ function App() {
     directoryInput.setAttribute("multiple", true);
     directoryInput.click();
     directoryInput.addEventListener("change", handleFileSelect, false);
-  };
+  }
 
   const handleFileSelect = (event) => {
     event.preventDefault();
@@ -40,32 +43,24 @@ function App() {
         const jsonReader = new FileReader();
         jsonReader.onload = (e) => {
           const json = JSON.parse(e.target.result);
-          // console.log("Parsed JSON:", json);
-          updatedFileData.push(json); // Push the parsed JSON into the array
-          // console.log("Updated File Data:", updatedFileData);
-          setFileData(updatedFileData); // Update the state with the new array
-          // console.log("Files:", updatedFileData.length);
+          updatedFileData.push(json);
+          setFileData(updatedFileData);
         };
         jsonReader.readAsText(jsonFiles[i]);
       }
-      // console.log("IF Exit", updatedFileData.length);
     }
-  };
-
-  // const obj5 = {
-  //   Data: [...loopStart],
-  // };
-
-  // const handleJsonDownload = () => {
-  //   const json = JSON.stringify(obj5);
-  //   const blob = new Blob([json], { type: 'application/json' });
-  //   const href = URL.createObjectURL(blob);
-  //   const jsondownload = document.createElement("a");
-  //   jsondownload.href = href;
-  //   jsondownload.download = "para.json";
-  //   document.body.appendChild(jsondownload);
-  //   jsondownload.click();
-  // };
+    toast.info('Your data is loaded!', {
+      position: "top-center",
+      transition: Flip,
+      autoClose: 1300,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
+  }
 
   const convertToCSV = (data) => {
     const headers = ['FileName', 'Trackid', 'category', 'Hierarchy', 'xDiff', 'yDiff', 'is_small_objects'];
@@ -82,7 +77,7 @@ function App() {
     });
 
     return csvRows.join('\n');
-  };
+  }
 
   const csvDownload = () => {
     // const list = [...res].map((item) =>
@@ -94,7 +89,7 @@ function App() {
     //     "jeans_fit_type": subarray[1],
     //   })
     // );
-    // console.log("length", loopStart.length);
+
 
     const csv = convertToCSV(loopStart);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -104,21 +99,14 @@ function App() {
     a.download = 'data.csv';
     a.click();
     URL.revokeObjectURL(url);
-  };
+  }
 
   const nested = () => {
-    console.log("FileData", fileData);
-    console.log("Started");
     const arr = [];
     for (let i = 0; i < fileData.length; i++) {
-
-      // console.log(`FirstLoop${i}`);
-
       const file = fileData[i].Sequence[0].SequenceDetails.FileName;
       const start = fileData[i].Sequence[0].Labels[0].Devices[0].Channels[0].ObjectLabels[0].FrameObjectLabels;
-
       for (let j = 0; j < start.length; j++) {
-        // console.log(`SecondLoop${j}`);
         const target = { FileName: null, Trackid: null, category: null, Hierarchy: null, xDiff: null, yDiff: null, is_small_objects: null };
         target.FileName = file;
         target.Trackid = start[j].Trackid;
@@ -141,24 +129,37 @@ function App() {
       }
     }
     setLoopStart(arr);
-    console.log("Finished");
-  };
-
-  // useEffect(() => {
-  //   console.log("Files", fileData.length);
-  // }, [fileData]);
+    toast.success('Your data is ready!', {
+      position: "top-center",
+      transition: Zoom,
+      autoClose: 1500,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
+  }
 
   return (
-    <div className="App">
-      <div>
-        <button onClick={handleFolderSelect}>Select Json Folder</button>
-        <button onClick={nested}>Analyze Data</button>
-        {/* <button onClick={handleJsonDownload}>Download JSON</button> */}
-        <button onClick={() => csvDownload()}>Download CSV</button>
+    <div className="bg-gradient-to-r from-slate-600 via-slate-800 to-slate-950 h-screen w-full ">
+      <div className="h-1/7 flex  justify-between">
+        <img className="h-20" src={logo} />
+        {/* <p className="flex items-center text-white font-semibold text-xl justify-center mr-8">JSON QUALITY CHECK</p> */}
+        <p class="flex items-center font-semibold text-2xl justify-center mr-8">
+          <span class="bg-gradient-to-r text-transparent bg-clip-text from-cyan-100 to-blue-300">JSON QUALITY CHECK</span>
+        </p>
       </div>
+      <div className="bg-gradient-to-r from-slate-600 via-slate-800 to-slate-950 h-1/2  w-full flex justify-center items-center">
 
+        <div className='text-center flex gap-10'>
+          <button className="bg-gray-600 text-white rounded px-4 py-2 shadow-lg shadow-black font-medium" onClick={handleFolderSelect}>Select Json Folder</button>
+          <button className="bg-orange-400 text-white rounded px-4 py-2 shadow-lg shadow-black font-medium" onClick={nested}>Analyze Data</button>
+          <button className="bg-gray-600 text-white rounded px-4 py-2 shadow-lg shadow-black font-medium" onClick={() => csvDownload()}>Download CSV</button>
+        </div>
+      </div>
+      <ToastContainer />
     </div>
   );
 }
-
-export default App;
