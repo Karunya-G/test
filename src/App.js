@@ -49,10 +49,10 @@ export default function App() {
         jsonReader.readAsText(jsonFiles[i]);
       }
     }
-    toast.info('Your data is loaded!', {
+    toast.info('Your data is ready to download!', {
       position: "top-center",
       transition: Flip,
-      autoClose: 1300,
+      autoClose: 1000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
@@ -79,7 +79,55 @@ export default function App() {
     return csvRows.join('\n');
   }
 
-  const csvDownload = () => {
+  const csvDownloadIR = () => {
+    const arr = [];
+    for (let i = 0; i < fileData.length; i++) {
+      const file = fileData[i].Sequence[0].SequenceDetails.FileName;
+      const start = fileData[i].Sequence[0].Labels[0].Devices[0].Channels[0].ObjectLabels[0].FrameObjectLabels;
+      for (let j = 0; j < start.length; j++) {
+        const target = { FileName: null, Trackid: null, category: null, Hierarchy: null, xDiff: null, yDiff: null, is_small_objects: null };
+        target.FileName = file;
+        target.Trackid = start[j].Trackid;
+        target.category = start[j].category;
+        target.Hierarchy = start[j].attributes.Hierarchy[0];
+        const xMin = Math.min(...start[j].shape.x);
+        const xMax = Math.max(...start[j].shape.x);
+        const yMin = Math.min(...start[j].shape.y);
+        const yMax = Math.max(...start[j].shape.y);
+        target.xDiff = xMax - xMin;
+        target.yDiff = yMax - yMin;
+        if (target.xDiff < 4 && target.yDiff < 4) {
+          target.is_small_objects = 'Yes';
+        } else {
+          target.is_small_objects = 'No';
+        }
+        arr.push(target);
+      }
+    }
+    setLoopStart(arr);
+    toast.success('Downloading', {
+      position: "top-center",
+      transition: Zoom,
+      autoClose: 1500,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
+
+    const csv = convertToCSV(arr);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'data.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const csvDownloadRGB = () => {
     // const list = [...res].map((item) =>
     //   [item.image_url, item.tagged_class]
     // );
@@ -90,18 +138,6 @@ export default function App() {
     //   })
     // );
 
-
-    const csv = convertToCSV(loopStart);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'data.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  const nested = () => {
     const arr = [];
     for (let i = 0; i < fileData.length; i++) {
       const file = fileData[i].Sequence[0].SequenceDetails.FileName;
@@ -129,7 +165,7 @@ export default function App() {
       }
     }
     setLoopStart(arr);
-    toast.success('Your data is ready!', {
+    toast.success('Downloading', {
       position: "top-center",
       transition: Zoom,
       autoClose: 1500,
@@ -140,13 +176,22 @@ export default function App() {
       progress: undefined,
       theme: "light",
     });
+
+
+    const csv = convertToCSV(arr);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'data.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
     <div className="bg-gradient-to-r from-slate-600 via-slate-800 to-slate-950 h-screen w-full ">
       <div className="h-1/7 flex  justify-between">
         <img className="h-20" src={logo} />
-        {/* <p className="flex items-center text-white font-semibold text-xl justify-center mr-8">JSON QUALITY CHECK</p> */}
         <p class="flex items-center font-semibold text-2xl justify-center mr-8">
           <span class="bg-gradient-to-r text-transparent bg-clip-text from-cyan-100 to-blue-300">JSON QUALITY CHECK</span>
         </p>
@@ -154,9 +199,9 @@ export default function App() {
       <div className="bg-gradient-to-r from-slate-600 via-slate-800 to-slate-950 h-1/2  w-full flex justify-center items-center">
 
         <div className='text-center flex gap-10'>
-          <button className="bg-gray-600 text-white rounded px-4 py-2 shadow-lg shadow-black font-medium" onClick={handleFolderSelect}>Select Json Folder</button>
-          <button className="bg-orange-400 text-white rounded px-4 py-2 shadow-lg shadow-black font-medium" onClick={nested}>Analyze Data</button>
-          <button className="bg-gray-600 text-white rounded px-4 py-2 shadow-lg shadow-black font-medium" onClick={() => csvDownload()}>Download CSV</button>
+          <button className="bg-orange-400 text-white rounded px-4 py-2 shadow-lg shadow-black font-medium" onClick={handleFolderSelect}>Select Json Folder</button>
+          <button className="bg-gray-600 text-white rounded px-4 py-2 shadow-lg shadow-black font-medium" onClick={() => csvDownloadRGB()}>Download CSV RGB</button>
+          <button className="bg-gray-600 text-white rounded px-4 py-2 shadow-lg shadow-black font-medium" onClick={() => csvDownloadIR()}>Download CSV IR</button>
         </div>
       </div>
       <ToastContainer />
